@@ -207,7 +207,7 @@ rfbHttpCheckFds(rfbScreenInfoPtr rfbScreen)
 	httpProcessInput(rfbScreen);
     }
 
-    if (FD_ISSET(rfbScreen->httpListenSock, &fds) || FD_ISSET(rfbScreen->httpListen6Sock, &fds)) {
+    if (FD_ISSET(rfbScreen->httpListenSock, &fds) || (rfbScreen->httpListen6Sock > -1 && FD_ISSET(rfbScreen->httpListen6Sock, &fds))) {
 	if (rfbScreen->httpSock >= 0) close(rfbScreen->httpSock);
 
 	if(FD_ISSET(rfbScreen->httpListenSock, &fds)) {
@@ -216,7 +216,7 @@ rfbHttpCheckFds(rfbScreenInfoPtr rfbScreen)
 	      return;
 	    }
 	}
-	else if(FD_ISSET(rfbScreen->httpListen6Sock, &fds)) {
+	else if(rfbScreen->httpListen6Sock > -1 && FD_ISSET(rfbScreen->httpListen6Sock, &fds)) {
 	    if ((rfbScreen->httpSock = accept(rfbScreen->httpListen6Sock, (struct sockaddr *)&addr, &addrlen)) < 0) {
 	      rfbLogPerror("httpCheckFds: accept");
 	      return;
