@@ -89,6 +89,7 @@ typedef struct ws_ctx_s {
     int carrylen;
     int version;
     int base64;
+    int iscontrolframe; /* 0=no, 1=yes, -1=unknown */
     wsEncodeFunc encode;
     wsDecodeFunc decode;
 } ws_ctx_t;
@@ -667,6 +668,8 @@ webSocketsDecodeHybi(rfbClientPtr cl, char *dst, int len)
       goto spor;
     }
 
+    wsctx->iscontrolframe = -1;
+
     buf = wsctx->codeBufDecode;
     header = (ws_header_t *)wsctx->codeBufDecode;
 
@@ -750,6 +753,7 @@ webSocketsDecodeHybi(rfbClientPtr cl, char *dst, int len)
       case WS_OPCODE_CLOSE:
 	rfbLog("got closure, reason %d\n", WS_NTOH16(((uint16_t *)payload)[0]));
 	errno = ECONNRESET;
+	wsctx->iscontrolframe = 1;
 	break;
       case WS_OPCODE_TEXT_FRAME:
 	if (-1 == (flength = __b64_pton(payload, (unsigned char *)wsctx->codeBufDecode, sizeof(wsctx->codeBufDecode)))) {
@@ -767,7 +771,12 @@ webSocketsDecodeHybi(rfbClientPtr cl, char *dst, int len)
 	}
 	memcpy(dst, payload, flength);
 	result = flength;
+	wsctx->iscontrolframe = 0;
 	break;
+      case WS_OPCODE_PONG:
+        result = len;
+        wsctx->iscontrolframe = 1;
+        break;
       default:
 	rfbErr("%s: unhandled opcode %d, b0: %02x, b1: %02x\n", __func__, (int)opcode, header->b0, header->b1);
     }
@@ -928,4 +937,17 @@ webSocketsHasDataInBuffer(rfbClientPtr cl)
       return TRUE;
 
     return (cl->sslctx && rfbssl_pending(cl) > 0);
+}
+
+/* returns TRUE is last received data was a control frame.
+ */
+rfbBool
+webSocketsLastDataIsControlFrame(rfbClientPtr cl)
+{
+    ws_ctx_t *wsctx = (ws_ctx_t *)cl->wsctx;
+
+    if (wsctx && wsctx->iscontrolframe == 1)
+        return TRUE;
+
+    return FALSE;
 }

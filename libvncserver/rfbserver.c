@@ -2008,6 +2008,12 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
         return;
     }
 
+#ifdef LIBVNCSERVER_WITH_WEBSOCKETS
+    /* ignore control frames */
+    if (cl->wsctx && webSocketsLastDataIsControlFrame(cl) == TRUE)
+        return;
+#endif
+
     switch (msg.type) {
 
     case rfbSetPixelFormat:
