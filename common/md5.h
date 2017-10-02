@@ -31,6 +31,14 @@
 #define MD5_DIGEST_SIZE 16
 #define MD5_BLOCK_SIZE 64
 
+#ifndef __THROW
+# if defined __cplusplus && __GNUC_PREREQ (2,8)
+#  define __THROW	throw ()
+# else
+#  define __THROW
+# endif
+#endif
+
 /* The following contortions are an attempt to use the C preprocessor
    to determine an unsigned integral type that is 32 bits wide.  An
    alternative approach is to use autoconf's AC_CHECK_SIZEOF macro, but
