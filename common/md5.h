@@ -31,6 +31,15 @@
 #define MD5_DIGEST_SIZE 16
 #define MD5_BLOCK_SIZE 64
 
+#ifndef __GNUC_PREREQ
+# if defined __GNUC__ && defined __GNUC_MINOR__
+#  define __GNUC_PREREQ(maj, min)                                       \
+  ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
+# else
+#  define __GNUC_PREREQ(maj, min) 0
+# endif
+#endif
+
 #ifndef __THROW
 # if defined __cplusplus && __GNUC_PREREQ (2,8)
 #  define __THROW	throw ()
